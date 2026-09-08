@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>灵感笔记 · 随手记下每一个灵感 | 射手科技</title>
+<meta name="description" content="灵感笔记是一款连接 Q助理 的极简卡片式记录工具：打开即写，Markdown 所见即所得，想法自动同步到你的每一台设备。支持 Windows、macOS、Android、iOS。" />
+<link rel="icon" type="image/png" href="https://aka.doubaocdn.com/s/zlLWIOzdUs" />
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap" />
+<style>
+/* ============================================================
+   灵感笔记官网 · 设计令牌
+   取自应用真实配色：米黄纸底 / 深棕墨色 / 橙棕铅笔色 / 暖红点缀
+   ============================================================ */
+:root {
+  --paper:   #f4e9d3;
+  --paper-2: #f9f2e2;
+  --card:    #fbf7ee;
+  --line:    #e9dcc0;
+  --line-2:  #ddc8aa;
+  --ink:     #2b2116;
+  --text:    #5d4430;
+  --text-2:  #7a6350;
+  --muted:   #a08a70;
+  --brand:   #b6774c;
+  --brand-h: #a05f35;
+  --brand-soft: #ecdfc4;
+  --red:     #c94f3d;
+  --dark:    #2b2116;
+  --dark-2:  #241c11;
+  --r:       12px;
+  --shadow:  0 1px 2px rgba(60,40,15,.06), 0 12px 32px rgba(120,85,40,.10);
+  --font: "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+          "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font);
+  background: var(--paper);
+  color: var(--text);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+/* 纸感点阵纹理 */
+.dot-bg {
+  background-image: radial-gradient(rgba(122,99,80,.10) 1px, transparent 1.4px);
+  background-size: 22px 22px;
+}
+
+img { max-width: 100%; display: block; }
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; }
+
+.container {
+  width: min(1160px, 92vw);
+  margin: 0 auto;
+}
+
+/* ============ 顶栏 ============ */
+.site-nav {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(244,233,211,.86);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+.nav-inner {
+  display: flex; align-items: center; gap: 28px;
+  height: 64px;
+}
+.brand { display: flex; align-items: center; gap: 10px; margin-right: auto; }
+.brand img { width: 34px; height: 34px; border-radius: 8px; }
+.brand-name { font-size: 17px; font-weight: 700; color: var(--ink); letter-spacing: .01em; }
+.nav-links { display: flex; gap: 26px; }
+.nav-links a {
+  font-size: 14.5px; color: var(--text-2); font-weight: 500;
+  padding: 6px 2px; border-bottom: 2px solid transparent; transition: color .15s, border-color .15s;
+}
+.nav-links a:hover { color: var(--brand); border-color: var(--brand); }
+.nav-cta {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--brand); color: #fff7ec;
+  font-size: 14.5px; font-weight: 700;
+  padding: 9px 18px; border-radius: 999px; border: none;
+  transition: background .15s, transform .15s;
+}
+.nav-cta:hover { background: var(--brand-h); transform: translateY(-1px); }
+
+/* ============ Hero ============ */
+.hero {
+  position: relative;
+  padding: 76px 0 96px;
+  overflow: hidden;
+}
+.hero::after {
+  content: ""; position: absolute; inset: auto -10% -40% -10%; height: 420px;
+  background: radial-gradient(closest-side, rgba(182,119,76,.16), transparent 70%);
+  pointer-events: none;
+}
+.hero-grid {
+  position: relative; z-index: 1;
+  display: grid; grid-template-columns: 1fr 1.12fr;
+  gap: 56px; align-items: center;
+}
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 700; color: var(--brand);
+  background: #f0e0c6; border: 1px solid var(--line-2);
+  padding: 5px 13px; border-radius: 999px;
+  margin-bottom: 20px;
+}
+.hero-eyebrow::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--brand); }
+.hero h1 {
+  font-size: clamp(38px, 5.2vw, 60px);
+  line-height: 1.12; font-weight: 900; color: var(--ink);
+  letter-spacing: -.02em;
+  margin-bottom: 18px;
+}
+.hero h1 em {
+  font-style: normal; color: var(--brand);
+  position: relative;
+}
+.hero-sub {
+  font-size: clamp(15px, 1.6vw, 17.5px);
+  color: var(--text-2); max-width: 46ch;
+  margin-bottom: 34px;
+}
+.hero-ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
+.btn-dl {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: var(--card); border: 1px solid var(--line-2);
+  color: var(--ink); border-radius: 12px;
+  padding: 11px 18px;
+  font-weight: 700; font-size: 14.5px;
+  box-shadow: var(--shadow);
+  transition: transform .15s, border-color .15s, box-shadow .15s;
+}
+.btn-dl:hover { transform: translateY(-2px); border-color: var(--brand); box-shadow: 0 4px 14px rgba(166,95,53,.18); }
+.btn-dl svg { width: 20px; height: 20px; flex-shrink: 0; }
+.btn-dl .dl-name { font-size: 12.5px; font-weight: 500; color: var(--muted); display: block; line-height: 1.15; margin-top: 1px; }
+.btn-dl .dl-os { font-size: 15px; font-weight: 800; display: block; line-height: 1.15; }
+.btn-dl .dl-wrap { text-align: left; }
+.hero-note { font-size: 13px; color: var(--muted); }
+
+/* —— Hero 产品窗口（签名元素：真实界面 + 漂浮标签） —— */
+.hero-visual { position: relative; }
+.window-card {
+  position: relative;
+  background: var(--card);
+  border: 1px solid var(--line-2);
+  border-radius: 18px;
+  box-shadow: 0 24px 60px rgba(80,52,22,.18), 0 4px 14px rgba(80,52,22,.08);
+  overflow: hidden;
+  animation: winFloat 7s ease-in-out infinite;
+}
+.window-card img {
+  width: 100%; height: auto; display: block;
+}
+.window-bar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--paper-2);
+}
+.window-dot { width: 12px; height: 12px; border-radius: 50%; }
+.window-dot.r { background: #e8694f; }
+.window-dot.y { background: #e4b64c; }
+.window-dot.g { background: #7fae6a; }
+.window-bar-title { margin-left: 10px; font-size: 12.5px; color: var(--muted); }
+
+/* 漂浮标签 */
+.tag-chip {
+  position: absolute; z-index: 3;
+  display: inline-flex; align-items: center;
+  font-size: 13px; font-weight: 700;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  padding: 6px 14px;
+  box-shadow: 0 8px 20px rgba(80,52,22,.12);
+  animation: chipFloat 6s ease-in-out infinite;
+}
+.tag-chip b { color: var(--brand); margin-right: 5px; font-weight: 900; }
+.tag-chip.c1 { top: -18px; left: -14px; transform: rotate(-6deg); animation-delay: .2s; }
+.tag-chip.c2 { top: 12%; right: -22px; transform: rotate(4deg); animation-delay: 1.4s; }
+.tag-chip.c3 { bottom: 18%; left: -26px; transform: rotate(3deg); animation-delay: 2.6s; }
+.tag-chip.c4 { bottom: -20px; right: 8%; transform: rotate(-4deg); animation-delay: .8s; }
+.tag-chip.red b { color: var(--red); }
+
+@keyframes winFloat {
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(-9px); }
+}
+@keyframes chipFloat {
+  0%,100% { translate: 0 0; }
+  50%     { translate: 0 -8px; }
+}
+
+/* ============ 通用章节 ============ */
+.section { padding: 92px 0; }
+.sec-head { max-width: 640px; margin-bottom: 52px; }
+.sec-head.center { margin-inline: auto; text-align: center; }
+.sec-kicker {
+  display: inline-block; font-size: 13px; font-weight: 700; color: var(--brand);
+  letter-spacing: .14em; margin-bottom: 12px;
+}
+.sec-head h2 {
+  font-size: clamp(28px, 3.4vw, 40px);
+  font-weight: 900; color: var(--ink); line-height: 1.2;
+  letter-spacing: -.01em; margin-bottom: 14px;
+}
+.sec-head p { color: var(--text-2); font-size: 16px; }
+
+/* ============ 功能 ============ */
+.features { background: var(--paper-2); border-block: 1px solid var(--line); }
+.feat-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+}
+.feat-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 26px 26px 24px;
+  box-shadow: var(--shadow);
+  transition: transform .18s, box-shadow .18s, border-color .18s;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.feat-card:hover { transform: translateY(-4px); border-color: var(--line-2); box-shadow: 0 18px 40px rgba(120,85,40,.12); }
+.feat-icon {
+  width: 42px; height: 42px; border-radius: 12px;
+  display: grid; place-items: center;
+  background: var(--brand-soft); color: var(--brand);
+  margin-bottom: 14px;
+}
+.feat-icon svg { width: 21px; height: 21px; }
+.feat-card h3 { font-size: 18px; font-weight: 800; color: var(--ink); }
+.feat-card p { font-size: 14.5px; color: var(--text-2); margin-bottom: 14px; }
+.feat-demo { margin-top: auto; }
+
+/* 功能卡片内的小示意（CSS 绘制，与产品视觉一致） */
+.demo { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+.demo-row { display: flex; gap: 8px; align-items: center; }
+.demo-input {
+  flex: 1; background: var(--card); border: 1px solid var(--line-2); border-radius: 8px;
+  padding: 8px 10px; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden;
+}
+.demo-input b { color: var(--brand); font-weight: 800; }
+.demo-input mark { background: rgba(182,119,76,.30); color: var(--ink); border-radius: 3px; padding: 0 2px; }
+.demo-send {
+  width: 30px; height: 30px; border-radius: 8px; background: var(--brand); border: none;
+  display: grid; place-items: center; color: #fff7ec;
+}
+.demo-send svg { width: 14px; height: 14px; }
+.demo-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.demo-tag {
+  font-size: 12px; font-weight: 700; color: var(--text);
+  background: var(--card); border: 1px solid var(--line-2); border-radius: 999px; padding: 3px 10px;
+}
+.demo-tag b { color: var(--brand); font-weight: 900; }
+.demo-tag.green { background: #eaf0dd; border-color: #cfdcb2; color: #4d6132; }
+.demo-tag.green b { color: #6d8a3f; }
+.demo-tag.red { background: var(--red); border-color: var(--red); color: #fff; }
+.demo-tag.red b { color: #fff; }
+.demo-heat { display: grid; grid-template-columns: repeat(14, 1fr); gap: 3px; }
+.demo-heat i { aspect-ratio: 1; border-radius: 2.5px; background: var(--line); }
+.demo-heat i.h1 { background: #e3cdb0; }
+.demo-heat i.h2 { background: #d5a97e; }
+.demo-heat i.h3 { background: var(--brand); }
+.demo-note {
+  background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--brand);
+  border-radius: 8px; padding: 9px 11px; font-size: 12px; color: var(--text); position: relative;
+}
+.demo-note small { display: block; color: var(--muted); font-size: 10.5px; margin-bottom: 3px; }
+.demo-note mark { background: rgba(182,119,76,.28); color: var(--ink); border-radius: 3px; padding: 0 2px; }
+.demo-kbd {
+  font-size: 10px; color: var(--muted); border: 1px solid var(--line-2); border-radius: 5px;
+  padding: 1px 6px; background: var(--card);
+}
+.demo-bubbles { display: flex; flex-direction: column; gap: 6px; }
+.demo-bubble {
+  align-self: flex-start; background: var(--brand-soft); border-radius: 10px;
+  font-size: 12px; color: var(--text); padding: 6px 10px; max-width: 88%;
+}
+.demo-bubble.self { align-self: flex-end; background: var(--card); border: 1px solid var(--line); }
+.demo-bubble span { color: var(--muted); display: block; font-size: 10.5px; margin-top: 2px; }
+
+/* ============ 多端同步（深色段） ============ */
+.sync { background: var(--dark); color: var(--paper); position: relative; overflow: hidden; }
+.sync::before {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(60% 80% at 85% 20%, rgba(182,119,76,.18), transparent 60%);
+  pointer-events: none;
+}
+.sync-grid {
+  position: relative; z-index: 1;
+  display: grid; grid-template-columns: 1.05fr 1fr;
+  gap: 64px; align-items: center;
+}
+.sync .sec-kicker { color: #dfb58f; }
+.sync h2 { color: #f6ecd9; }
+.sync .sec-head p { color: #cbb38f; }
+.sync-steps { list-style: none; display: flex; flex-direction: column; gap: 14px; margin: 26px 0 30px; }
+.sync-steps li { display: flex; gap: 14px; align-items: flex-start; }
+.step-no {
+  flex-shrink: 0; width: 28px; height: 28px; border-radius: 9px;
+  background: rgba(182,119,76,.22); color: #e3b181;
+  display: grid; place-items: center; font-size: 13px; font-weight: 800;
+  border: 1px solid rgba(182,119,76,.35);
+}
+.sync-steps li p { font-size: 15px; color: #e9dcc0; padding-top: 2px; }
+.sync-chips { display: flex; flex-wrap: wrap; gap: 10px; }
+.sync-chip {
+  font-size: 13px; font-weight: 700; color: #e9dcc0;
+  border: 1px solid rgba(233,220,192,.28); background: rgba(233,220,192,.06);
+  border-radius: 999px; padding: 7px 15px;
+}
+.sync-chip svg { width: 14px; height: 14px; vertical-align: -2px; margin-right: 6px; stroke: #dfb58f; }
+
+/* 手机壳（CSS 绘制） */
+.phone-wrap { position: relative; display: grid; place-items: center; }
+.phone {
+  width: 300px; aspect-ratio: 9/19.2;
+  background: #1c150c;
+  border-radius: 44px;
+  padding: 11px;
+  box-shadow: 0 30px 70px rgba(0,0,0,.45), inset 0 0 0 2px #3a2c1c;
+  animation: chipFloat 7s ease-in-out infinite;
+}
+.phone-screen {
+  width: 100%; height: 100%;
+  background: var(--paper);
+  border-radius: 34px; overflow: hidden;
+  display: flex; flex-direction: column;
+  position: relative;
+}
+.phone-notch {
+  position: absolute; top: 9px; left: 50%; transform: translateX(-50%);
+  width: 84px; height: 22px; background: #1c150c; border-radius: 999px; z-index: 5;
+}
+.phone-status {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 22px 6px; font-size: 10.5px; color: var(--text); font-weight: 700;
+}
+.phone-status svg { width: 44px; height: 11px; }
+.phone-app-head {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 8px 16px 12px; position: relative;
+}
+.phone-app-head .ph-title { font-size: 16px; font-weight: 900; color: var(--ink); }
+.phone-app-head .ph-add {
+  position: absolute; right: 18px; width: 28px; height: 28px; border-radius: 9px;
+  background: var(--brand); color: #fff7ec; border: none; display: grid; place-items: center;
+}
+.phone-app-head .ph-add svg { width: 14px; height: 14px; }
+.phone-search {
+  margin: 0 16px 10px;
+  display: flex; align-items: center; gap: 7px;
+  background: var(--card); border: 1px solid var(--line-2); border-radius: 10px;
+  padding: 7px 11px; font-size: 11.5px; color: var(--muted);
+}
+.phone-search svg { width: 12px; height: 12px; }
+.phone-feed { flex: 1; overflow: hidden; padding: 0 16px; display: flex; flex-direction: column; gap: 9px; }
+.ph-note {
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  padding: 11px 12px;
+}
+.ph-note .ph-date { font-size: 10px; color: var(--muted); margin-bottom: 3px; }
+.ph-note .ph-text { font-size: 12.5px; color: var(--text); line-height: 1.5; }
+.ph-note .ph-tag {
+  display: inline-block; margin-top: 6px; font-size: 10.5px; font-weight: 700;
+  color: #4d6132; background: #eaf0dd; border-radius: 999px; padding: 2px 8px;
+}
+.ph-note.hl { border-left: 3px solid var(--brand); }
+.ph-tabbar {
+  display: flex; justify-content: space-around; align-items: center;
+  padding: 10px 20px 16px;
+}
+.ph-tabbar span { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 9.5px; color: var(--muted); }
+.ph-tabbar span.on { color: var(--brand); }
+.ph-tabbar svg { width: 17px; height: 17px; }
+
+/* ============ 下载 ============ */
+.dl-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+.dl-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 28px 22px 22px;
+  display: flex; flex-direction: column; gap: 10px;
+  box-shadow: var(--shadow);
+  transition: transform .18s, box-shadow .18s, border-color .18s;
+}
+.dl-card:hover { transform: translateY(-4px); border-color: var(--line-2); box-shadow: 0 18px 40px rgba(120,85,40,.12); }
+.dl-os-icon {
+  width: 46px; height: 46px; border-radius: 13px;
+  display: grid; place-items: center;
+  background: var(--paper-2); border: 1px solid var(--line-2); color: var(--ink);
+  margin-bottom: 6px;
+}
+.dl-os-icon svg { width: 24px; height: 24px; }
+.dl-card h3 { font-size: 18px; font-weight: 800; color: var(--ink); }
+.dl-card .dl-desc { font-size: 13px; color: var(--text-2); flex: 1; }
+.dl-card .dl-meta { font-size: 12px; color: var(--muted); }
+.dl-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; margin-top: 12px;
+  background: var(--brand); color: #fff7ec; border: none; border-radius: 11px;
+  font-size: 15px; font-weight: 800; padding: 12px 0;
+  transition: background .15s, transform .15s;
+}
+.dl-btn:hover { background: var(--brand-h); transform: translateY(-1px); }
+.dl-btn.ghost { background: transparent; border: 1.5px solid var(--line-2); color: var(--text); }
+.dl-btn.ghost:hover { border-color: var(--brand); color: var(--brand); background: transparent; }
+.dl-btn svg { width: 16px; height: 16px; }
+.dl-btn-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.dl-btn-pair .dl-btn { margin-top: 0; font-size: 13.5px; padding: 11px 4px; }
+.dl-tip { margin-top: 26px; text-align: center; font-size: 13px; color: var(--muted); }
+.dl-tip a { color: var(--brand); font-weight: 700; border-bottom: 1px dashed var(--brand); }
+
+/* ============ 页脚 ============ */
+.site-footer { background: var(--dark-2); color: #cbb38f; padding: 44px 0 36px; }
+.footer-inner { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.footer-brand { display: flex; align-items: center; gap: 10px; margin-right: auto; }
+.footer-brand img { width: 28px; height: 28px; border-radius: 7px; }
+.footer-brand span { font-weight: 700; color: #e9dcc0; }
+.footer-inner .copy { font-size: 13px; }
+.footer-links { display: flex; gap: 20px; font-size: 13px; }
+.footer-links a:hover { color: #e9dcc0; }
+
+/* ============ Toast ============ */
+.toast {
+  position: fixed; left: 50%; bottom: 34px; z-index: 100;
+  transform: translate(-50%, 20px);
+  background: var(--ink); color: var(--paper);
+  font-size: 14px; font-weight: 500;
+  padding: 12px 22px; border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(0,0,0,.25);
+  opacity: 0; pointer-events: none;
+  transition: opacity .25s, transform .25s;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ============ 滚动显现 ============ */
+.reveal { opacity: 0; transform: translateY(22px); transition: opacity .6s ease, transform .6s ease; }
+.reveal.in { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .reveal { opacity: 1; transform: none; }
+}
+
+/* ============ 响应式 ============ */
+@media (max-width: 1024px) {
+  .hero-grid { grid-template-columns: 1fr; gap: 64px; }
+  .hero-visual { max-width: 640px; margin: 0 auto; }
+  .feat-grid { grid-template-columns: repeat(2, 1fr); }
+  .sync-grid { grid-template-columns: 1fr; gap: 56px; }
+  .dl-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 720px) {
+  .nav-links { display: none; }
+  .section { padding: 68px 0; }
+  .feat-grid { grid-template-columns: 1fr; }
+  .dl-grid { grid-template-columns: 1fr; }
+  .hero { padding: 48px 0 72px; }
+  .hero-ctas { flex-direction: column; align-items: stretch; }
+  .btn-dl { justify-content: center; }
+  .tag-chip { display: none; }
+  .footer-links { width: 100%; }
+}
+</style>
+</head>
+<body class="dot-bg">
+
+<!-- ============ 顶栏 ============ -->
+<header class="site-nav">
+  <div class="container nav-inner">
+    <a class="brand" href="#top" aria-label="灵感笔记 首页">
+      <img src="https://aka.doubaocdn.com/s/zlLWIOzdUs" alt="灵感笔记 logo" />
+      <span class="brand-name">灵感笔记</span>
+    </a>
+    <nav class="nav-links" aria-label="页面导航">
+      <a href="#preview">界面预览</a>
+      <a href="#features">功能</a>
+      <a href="#sync">多端同步</a>
+      <a href="#download">下载</a>
+    </nav>
+    <button class="nav-cta" data-tip data-platform="all">立即下载</button>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ============ Hero ============ -->
+  <section class="hero" id="preview">
+    <div class="container hero-grid">
+      <div class="hero-copy">
+        <span class="hero-eyebrow">连接 Q助理 · 记录自动同步</span>
+        <h1>灵感，<em>随手记下</em></h1>
+        <p class="hero-sub">
+          灵感笔记是一款极简卡片式记录工具。打开即写，Markdown 所见即所得，
+          随手一句想法、一个标签，都会自动同步到你的每一台设备。
+        </p>
+        <div class="hero-ctas">
+          <button class="btn-dl" data-tip data-platform="win">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M0 3.449 9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
+            <span class="dl-wrap"><span class="dl-name">Windows 桌面端</span><span class="dl-os">Windows</span></span>
+          </button>
+          <button class="btn-dl" data-tip data-platform="mac">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>
+            <span class="dl-wrap"><span class="dl-name">macOS 桌面端</span><span class="dl-os">macOS</span></span>
+          </button>
+          <button class="btn-dl" data-tip data-platform="android">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9993.4482.9993.9993.0001.5511-.4482.9997-.9993.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9993.4482.9993.9993 0 .5511-.4482.9997-.9993.9997m11.4045-6.02 1.9973-3.4592a.416.416 0 0 0-.1521-.5676.416.416 0 0 0-.5676.1521l-2.0223 3.503C15.5902 8.2439 13.8533 7.8508 12 7.8508s-3.5902.3931-5.1367 1.0989L4.841 5.4467a.4161.4161 0 0 0-.5677-.1521.4157.4157 0 0 0-.1521.5676l1.9973 3.4592C2.6889 11.1867.3432 14.6589 0 18.761h24c-.3435-4.1021-2.6892-7.5743-6.1185-9.4396"/></svg>
+            <span class="dl-wrap"><span class="dl-name">Android 手机端</span><span class="dl-os">Android</span></span>
+          </button>
+          <button class="btn-dl" data-tip data-platform="ios">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>
+            <span class="dl-wrap"><span class="dl-name">iPhone / iPad</span><span class="dl-os">iOS</span></span>
+          </button>
+        </div>
+        <p class="hero-note">桌面端免费使用 · Q助理 App 扫码登录 · 无需注册新账号</p>
+      </div>
+
+      <div class="hero-visual" aria-label="灵感笔记桌面端界面预览">
+        <div class="tag-chip c1"><b>#</b>灵感</div>
+        <div class="tag-chip c2"><b>#</b>生活</div>
+        <div class="tag-chip c3 red"><b>#</b>重点</div>
+        <div class="tag-chip c4"><b>#</b>产品</div>
+        <div class="window-card">
+          <div class="window-bar">
+            <span class="window-dot r"></span>
+            <span class="window-dot y"></span>
+            <span class="window-dot g"></span>
+            <span class="window-bar-title">灵感笔记 · 桌面端</span>
+          </div>
+          <img src="https://aka.doubaocdn.com/s/HyImq2YU3a" alt="灵感笔记桌面端界面截图：卡片式笔记、标签、热力图与搜索" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 功能 ============ -->
+  <section class="section features" id="features">
+    <div class="container">
+      <div class="sec-head center reveal">
+        <span class="sec-kicker">FEATURES</span>
+        <h2>为「随手记」而生的功能</h2>
+        <p>没有复杂的目录结构，只有输入框、标签和一条条卡片——记录本身，就该这么简单。</p>
+      </div>
+
+      <div class="feat-grid">
+        <!-- 快速记录 -->
+        <article class="feat-card reveal">
+          <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
+          <h3>快速记录</h3>
+          <p>顶部输入框直接书写，支持加粗、代码、引用、待办清单，所见即所得，回车即保存。</p>
+          <div class="demo feat-demo">
+            <div class="demo-row">
+              <span class="demo-input">今天的想法是：<b>#灵感</b> 做一个倒计时小组件…</span>
+              <span class="demo-send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m22 2-11 11"/><path d="M22 2 15 22l-4-9-9-4Z"/></svg></span>
+            </div>
+          </div>
+        </article>
+
+        <!-- 标签整理 -->
+        <article class="feat-card reveal">
+          <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z"/><circle cx="7.5" cy="7.5" r="1.3"/></svg></div>
+          <h3>#标签 整理</h3>
+          <p>用标签给灵感分类，侧边栏点击即可筛选，笔记内标签高亮，一屏看清所有主题。</p>
+          <div class="demo feat-demo">
+            <div class="demo-tags">
+              <span class="demo-tag"><b>#</b>灵感</span>
+              <span class="demo-tag green"><b>#</b>生活</span>
+              <span class="demo-tag"><b>#</b>产品</span>
+              <span class="demo-tag red"><b>#</b>重点</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- 打卡热力图 -->
+        <article class="feat-card reveal">
+          <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg></div>
+          <h3>打卡热力图</h3>
+          <p>侧边栏 12 周记录热力图，颜色深浅就是你的灵感密度，坚持看得见。</p>
+          <div class="demo feat-demo">
+            <div class="demo-heat" aria-hidden="true"><i></i><i class="h1"></i><i></i><i class="h1"></i><i></i><i class="h1"></i><i></i><i class="h1"></i><i></i><i class="h1"></i><i></i><i class="h1"></i><i></i><i class="h1"></i><i class="h2"></i><i class="h1"></i><i class="h3"></i><i class="h1"></i><i></i><i class="h2"></i><i class="h1"></i><i class="h3"></i><i class="h1"></i><i></i><i class="h2"></i><i class="h1"></i><i class="h3"></i><i class="h1"></i><i class="h1"></i><i></i><i class="h2"></i><i class="h1"></i><i></i><i class="h3"></i><i class="h2"></i><i class="h1"></i><i></i><i class="h2"></i><i class="h1"></i><i></i><i class="h2"></i><i class="h1"></i><i></i><i class="h3"></i><i class="h2"></i><i class="h1"></i><i class="h1"></i><i></i><i class="h3"></i><i class="h2"></i><i class="h1"></i><i class="h1"></i><i></i><i class="h3"></i><i class="h2"></i><i class="h1"></i><i class="h2"></i><i class="h2"></i><i class="h2"></i><i class="h1"></i><i class="h1"></i><i class="h1"></i><i></i><i></i><i></i><i class="h3"></i><i class="h2"></i><i class="h2"></i><i class="h2"></i><i class="h1"></i><i class="h1"></i><i class="h1"></i><i class="h1"></i><i class="h1"></i><i class="h1"></i><i class="h1"></i><i class="h1"></i><i class="h1"></i><i class="h1"></i><i class="h1"></i><i class="h1"></i><i class="h1"></i><i class="h1"></i><i class="h1"></i><i></i><i class="h1"></i><i class="h1"></i><i class="h1"></i><i class="h2"></i><i class="h2"></i><i class="h2"></i><i class="h3"></i><i></i><i></i><i></i><i class="h1"></i><i class="h1"></i><i class="h1"></i></div>
+          </div>
+        </article>
+
+        <!-- 全局搜索 -->
+        <article class="feat-card reveal">
+          <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></div>
+          <h3>全局搜索</h3>
+          <p>按下 <span class="demo-kbd">⌘K</span> 聚焦搜索框，关键词实时过滤、命中高亮，旧想法想找就找。</p>
+          <div class="demo feat-demo">
+            <div class="demo-row">
+              <span class="demo-input"><mark>灵感</mark> 通常出现在散步时</span>
+              <span class="demo-kbd">⌘K</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- 每日回顾 -->
+        <article class="feat-card reveal">
+          <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="m12 7 1.6 3.2L17 11l-3.4 2.8L12.6 17 11 13.8 8 11l3.4-.8Z"/></svg></div>
+          <h3>每日回顾</h3>
+          <p>每天随机抽取一条历史笔记漫游，让被遗忘的旧灵感，重新点亮今天的你。</p>
+          <div class="demo feat-demo">
+            <div class="demo-note"><small>2026-09-03 · 每日回顾</small>「今天第一条 重点 · 把散步时想到的模块化方案写下来。」</div>
+          </div>
+        </article>
+
+        <!-- 微信输入 -->
+        <article class="feat-card reveal">
+          <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.9-.8L3 20l1-3.8A8.4 8.4 0 1 1 21 11.5Z"/></svg></div>
+          <h3>微信输入</h3>
+          <p>在微信里也能记录——把想记下的内容转发给灵感笔记，自动收成一条笔记。</p>
+          <div class="demo feat-demo">
+            <div class="demo-bubbles">
+              <div class="demo-bubble">这篇的第三章思路可以复用 <span>转发自 微信</span></div>
+              <div class="demo-bubble self">已保存为笔记 · <b>#灵感</b><span>刚刚</span></div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 多端同步 ============ -->
+  <section class="section sync" id="sync">
+    <div class="container sync-grid">
+      <div>
+        <div class="sec-head reveal">
+          <span class="sec-kicker">SYNC</span>
+          <h2>扫码登录，秒级同步</h2>
+          <p>桌面端与手机端通过 Q助理 双向同步：电脑上记的灵感，手机上立刻可见；本地保留缓存，离线也能读。</p>
+        </div>
+        <ol class="sync-steps reveal">
+          <li><span class="step-no">1</span><p>手机打开 <strong>Q助理</strong> App</p></li>
+          <li><span class="step-no">2</span><p>点击右上角「扫一扫」，扫描电脑上的二维码</p></li>
+          <li><span class="step-no">3</span><p>确认登录，灵感笔记开始自动同步</p></li>
+        </ol>
+        <div class="sync-chips reveal">
+          <span class="sync-chip"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>自动同步</span>
+          <span class="sync-chip"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>本地缓存 · 离线可用</span>
+          <span class="sync-chip"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>隐私安全</span>
+        </div>
+      </div>
+
+      <div class="phone-wrap reveal">
+        <div class="phone" role="img" aria-label="灵感笔记手机端界面示意">
+          <div class="phone-screen">
+            <div class="phone-notch"></div>
+            <div class="phone-status">
+              <span>9:41</span>
+              <svg viewBox="0 0 44 11" fill="currentColor" aria-hidden="true"><rect x="0" y="6" width="4" height="4" rx="1"/><rect x="6" y="4" width="4" height="6" rx="1"/><rect x="12" y="2" width="4" height="8" rx="1"/><rect x="18" y="0" width="4" height="10" rx="1"/><rect x="24" y="2" width="4" height="8" rx="1"/><path d="M31 0h9a4 4 0 0 1 4 4v3a4 4 0 0 1-4 4h-9a1 1 0 0 1-1-1V1a1 1 0 0 1 1-1Z"/></svg>
+            </div>
+            <div class="phone-app-head">
+              <span class="ph-title">灵感笔记</span>
+              <span class="ph-add" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+            </div>
+            <div class="phone-search">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+              搜索笔记
+            </div>
+            <div class="phone-feed">
+              <div class="ph-note hl">
+                <div class="ph-date">09-08 16:55</div>
+                <div class="ph-text">今天第一条 重点：把散步时想到的模块化方案写下来。</div>
+                <span class="ph-tag">#生活</span>
+              </div>
+              <div class="ph-note">
+                <div class="ph-date">09-08 09:12</div>
+                <div class="ph-text">给官网想一句 slogan：灵感，随手记下。</div>
+                <span class="ph-tag">#灵感</span>
+              </div>
+              <div class="ph-note">
+                <div class="ph-date">09-07 22:40</div>
+                <div class="ph-text">快捷键 ⌘K 聚焦搜索，Shift+Enter 换行。</div>
+              </div>
+              <div class="ph-note">
+                <div class="ph-date">09-06 19:03</div>
+                <div class="ph-text">Q助理 扫码登录后，桌面与手机自动同步。</div>
+                <span class="ph-tag">#产品</span>
+              </div>
+            </div>
+            <div class="ph-tabbar">
+              <span class="on"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 11.5 12 3l9 8.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1v-8.5Z"/></svg>笔记</span>
+              <span><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.9 2.9l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.9-2.9l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.9-2.9l.1.1a1.7 1.7 0 0 0 1.9.3h.1a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.2a1.7 1.7 0 0 0 1 1.5h.1a1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.9 2.9l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1a1.7 1.7 0 0 0 1.5 1h.2a2 2 0 1 1 0 4h-.2a1.7 1.7 0 0 0-1.5 1Z"/></svg>设置</span>
+              <span><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.9 2.9l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.9-2.9l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.9-2.9l.1.1a1.7 1.7 0 0 0 1.9.3h.1a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.2a1.7 1.7 0 0 0 1 1.5h.1a1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.9 2.9l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1a1.7 1.7 0 0 0 1.5 1h.2a2 2 0 1 1 0 4h-.2a1.7 1.7 0 0 0-1.5 1Z"/></svg>我的</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 下载 ============ -->
+  <section class="section" id="download">
+    <div class="container">
+      <div class="sec-head center reveal">
+        <span class="sec-kicker">DOWNLOAD</span>
+        <h2>下载灵感笔记</h2>
+        <p>选择你的设备，开始记录。桌面端免费使用，手机端通过 Q助理 App 获取。</p>
+      </div>
+
+      <div class="dl-grid">
+        <article class="dl-card reveal">
+          <div class="dl-os-icon"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M0 3.449 9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg></div>
+          <h3>Windows</h3>
+          <p class="dl-desc">桌面端安装包，随装随用，支持 Win 10 / 11（x64）。</p>
+          <p class="dl-meta">灵感笔记-Setup-1.1.0.exe · 约 XX MB</p>
+          <button class="dl-btn" data-tip data-platform="win">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+            下载 Windows 版
+          </button>
+        </article>
+
+        <article class="dl-card reveal">
+          <div class="dl-os-icon"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg></div>
+          <h3>macOS</h3>
+          <p class="dl-desc">DMG 安装包，提供 Apple 芯片与 Intel 双版本，按你的 Mac 选择下载。</p>
+          <p class="dl-meta">灵感笔记-1.1.0-arm64.dmg（Apple 芯片）<br/>灵感笔记-1.1.0-x64.dmg（Intel）</p>
+          <div class="dl-btn-pair">
+            <button class="dl-btn" data-tip data-platform="mac-arm">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+              Apple 芯片版
+            </button>
+            <button class="dl-btn ghost" data-tip data-platform="mac-intel">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+              Intel 芯片版
+            </button>
+          </div>
+        </article>
+
+        <article class="dl-card reveal">
+          <div class="dl-os-icon"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9993.4482.9993.9993.0001.5511-.4482.9997-.9993.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9993.4482.9993.9993 0 .5511-.4482.9997-.9993.9997m11.4045-6.02 1.9973-3.4592a.416.416 0 0 0-.1521-.5676.416.416 0 0 0-.5676.1521l-2.0223 3.503C15.5902 8.2439 13.8533 7.8508 12 7.8508s-3.5902.3931-5.1367 1.0989L4.841 5.4467a.4161.4161 0 0 0-.5677-.1521.4157.4157 0 0 0-.1521.5676l1.9973 3.4592C2.6889 11.1867.3432 14.6589 0 18.761h24c-.3435-4.1021-2.6892-7.5743-6.1185-9.4396"/></svg></div>
+          <h3>Android</h3>
+          <p class="dl-desc">手机端已集成于 Q助理 App，应用商店搜索「Q助理」即可下载。</p>
+          <p class="dl-meta">Android 7.0 及以上</p>
+          <button class="dl-btn ghost" data-tip data-platform="android">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+            去商店获取
+          </button>
+        </article>
+
+        <article class="dl-card reveal">
+          <div class="dl-os-icon"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg></div>
+          <h3>iOS</h3>
+          <p class="dl-desc">手机端已集成于 Q助理 App，App Store 搜索「Q助理」即可下载。</p>
+          <p class="dl-meta">iOS 14 及以上 · iPhone / iPad</p>
+          <button class="dl-btn ghost" data-tip data-platform="ios">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+            去商店获取
+          </button>
+        </article>
+      </div>
+
+      <p class="dl-tip reveal">
+        桌面端安装包即将发布，可先通过 <a href="#sync">Q助理 手机端</a> 体验；macOS 首次打开如被 Gatekeeper 拦截，
+        请在「系统设置 → 隐私与安全性」中允许打开。
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<!-- ============ 页脚 ============ -->
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <div class="footer-brand">
+      <img src="https://aka.doubaocdn.com/s/zlLWIOzdUs" alt="灵感笔记 logo" />
+      <span>灵感笔记</span>
+    </div>
+    <span class="copy">© 2026 射手科技 · 灵感笔记由 Q助理 提供技术支持</span>
+    <nav class="footer-links" aria-label="页脚链接">
+      <a href="#features">功能</a>
+      <a href="#sync">多端同步</a>
+      <a href="#download">下载</a>
+    </nav>
+  </div>
+</footer>
+
+<!-- ============ Toast ============ -->
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* 下载占位提示：链接上线后替换为真实下载地址即可 */
+  var PLACEHOLDER_TIP = "下载地址即将上线，敬请期待。发布后此处将替换为真实安装包链接。";
+  var toast = document.getElementById("toast");
+  var toastTimer = null;
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add("show");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.classList.remove("show"); }, 2600);
+  }
+
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest("[data-tip]");
+    if (!t) return;
+    showToast(PLACEHOLDER_TIP);
+  });
+
+  /* 滚动显现 */
+  var reveals = document.querySelectorAll(".reveal");
+  if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) {
+          en.target.classList.add("in");
+          io.unobserve(en.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: "0px 0px -40px 0px" });
+    reveals.forEach(function (el) { io.observe(el); });
+  } else {
+    reveals.forEach(function (el) { el.classList.add("in"); });
+  }
+})();
+</script>
+</body>
+</html>
