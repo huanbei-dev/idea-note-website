@@ -421,8 +421,32 @@ button { font-family: inherit; cursor: pointer; }
 .dl-btn.ghost { background: transparent; border: 1.5px solid var(--line-2); color: var(--text); }
 .dl-btn.ghost:hover { border-color: var(--brand); color: var(--brand); background: transparent; }
 .dl-btn svg { width: 16px; height: 16px; }
-.dl-btn-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
-.dl-btn-pair .dl-btn { margin-top: 0; font-size: 13.5px; padding: 11px 4px; }
+
+/* 下拉菜单（macOS 芯片选择） */
+.dl-dd { position: relative; }
+.hero-ctas .dl-dd { display: inline-flex; }
+.dl-card .dl-dd { display: block; }
+.dd-btn { cursor: pointer; }
+.dd-chev { width: 14px; height: 14px; margin-left: 6px; flex-shrink: 0; transition: transform .15s; }
+.dl-dd.open .dd-chev { transform: rotate(180deg); }
+.dd-menu {
+  position: absolute; top: calc(100% + 8px); left: 0; z-index: 40;
+  min-width: 100%; width: max-content;
+  background: var(--card); border: 1px solid var(--line-2); border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(60, 40, 15, .16);
+  padding: 6px; display: none; flex-direction: column; gap: 2px;
+}
+.dl-dd.open .dd-menu { display: flex; }
+.dd-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  width: 100%; border: none; background: transparent; cursor: pointer;
+  text-align: left; font-size: 13.5px; font-weight: 700; color: var(--text);
+  padding: 9px 12px; border-radius: 8px; white-space: nowrap;
+  transition: background .12s, color .12s;
+}
+.dd-item:hover, .dd-item:focus-visible { background: var(--brand-soft); color: var(--ink); outline: none; }
+.dd-item small { font-size: 11.5px; font-weight: 600; color: var(--muted); }
+.dd-item:hover small { color: var(--brand); }
 .dl-tip { margin-top: 26px; text-align: center; font-size: 13px; color: var(--muted); }
 .dl-tip a { color: var(--brand); font-weight: 700; border-bottom: 1px dashed var(--brand); }
 
@@ -516,10 +540,17 @@ button { font-family: inherit; cursor: pointer; }
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M0 3.449 9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
             <span class="dl-wrap"><span class="dl-name">Windows 桌面端</span><span class="dl-os">Windows</span></span>
           </button>
-          <button class="btn-dl" data-tip data-platform="mac">
-            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>
-            <span class="dl-wrap"><span class="dl-name">macOS 桌面端</span><span class="dl-os">macOS</span></span>
-          </button>
+          <div class="dl-dd" data-dd>
+            <button class="btn-dl dd-btn" aria-haspopup="listbox" aria-expanded="false">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>
+              <span class="dl-wrap"><span class="dl-name">macOS 桌面端</span><span class="dl-os">macOS</span></span>
+              <svg class="dd-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div class="dd-menu" role="menu" aria-label="选择 macOS 芯片版本">
+              <button class="dd-item" role="menuitem" data-tip data-platform="mac-arm"><span>Apple 芯片版</span><small>arm64</small></button>
+              <button class="dd-item" role="menuitem" data-tip data-platform="mac-intel"><span>Intel 芯片版</span><small>x64</small></button>
+            </div>
+          </div>
           <button class="btn-dl" data-tip data-platform="android">
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9993.4482.9993.9993.0001.5511-.4482.9997-.9993.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9993.4482.9993.9993 0 .5511-.4482.9997-.9993.9997m11.4045-6.02 1.9973-3.4592a.416.416 0 0 0-.1521-.5676.416.416 0 0 0-.5676.1521l-2.0223 3.503C15.5902 8.2439 13.8533 7.8508 12 7.8508s-3.5902.3931-5.1367 1.0989L4.841 5.4467a.4161.4161 0 0 0-.5677-.1521.4157.4157 0 0 0-.1521.5676l1.9973 3.4592C2.6889 11.1867.3432 14.6589 0 18.761h24c-.3435-4.1021-2.6892-7.5743-6.1185-9.4396"/></svg>
             <span class="dl-wrap"><span class="dl-name">Android 手机端</span><span class="dl-os">Android</span></span>
@@ -732,15 +763,16 @@ button { font-family: inherit; cursor: pointer; }
           <h3>macOS</h3>
           <p class="dl-desc">DMG 安装包，提供 Apple 芯片与 Intel 双版本，按你的 Mac 选择下载。</p>
           <p class="dl-meta">灵感笔记-1.1.0-arm64.dmg（Apple 芯片）<br/>灵感笔记-1.1.0-x64.dmg（Intel）</p>
-          <div class="dl-btn-pair">
-            <button class="dl-btn" data-tip data-platform="mac-arm">
+          <div class="dl-dd" data-dd>
+            <button class="dl-btn dd-btn" aria-haspopup="listbox" aria-expanded="false">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
-              Apple 芯片版
+              下载 macOS 版
+              <svg class="dd-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
             </button>
-            <button class="dl-btn ghost" data-tip data-platform="mac-intel">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
-              Intel 芯片版
-            </button>
+            <div class="dd-menu" role="menu" aria-label="选择 macOS 芯片版本">
+              <button class="dd-item" role="menuitem" data-tip data-platform="mac-arm"><span>Apple 芯片版</span><small>arm64</small></button>
+              <button class="dd-item" role="menuitem" data-tip data-platform="mac-intel"><span>Intel 芯片版</span><small>x64</small></button>
+            </div>
           </div>
         </article>
 
@@ -800,7 +832,13 @@ button { font-family: inherit; cursor: pointer; }
   "use strict";
 
   /* 下载占位提示：链接上线后替换为真实下载地址即可 */
-  var PLACEHOLDER_TIP = "下载地址即将上线，敬请期待。发布后此处将替换为真实安装包链接。";
+  var PLATFORM_LABELS = {
+    win: "Windows",
+    "mac-arm": "macOS · Apple 芯片版",
+    "mac-intel": "macOS · Intel 芯片版",
+    android: "Android",
+    ios: "iOS"
+  };
   var toast = document.getElementById("toast");
   var toastTimer = null;
 
@@ -811,10 +849,33 @@ button { font-family: inherit; cursor: pointer; }
     toastTimer = setTimeout(function () { toast.classList.remove("show"); }, 2600);
   }
 
+  /* 下拉菜单：点击按钮切换、点外部关闭、Esc 关闭 */
   document.addEventListener("click", function (e) {
+    var dd = e.target.closest(".dl-dd");
+    var openDds = document.querySelectorAll(".dl-dd.open");
+    for (var i = 0; i < openDds.length; i++) {
+      if (!dd || !dd.contains(openDds[i])) openDds[i].classList.remove("open");
+    }
+    if (dd) {
+      if (e.target.closest(".dd-item")) {
+        dd.classList.remove("open");
+      } else if (e.target.closest(".dd-btn")) {
+        var open = dd.classList.toggle("open");
+        dd.querySelector(".dd-btn").setAttribute("aria-expanded", String(open));
+      }
+    }
     var t = e.target.closest("[data-tip]");
     if (!t) return;
-    showToast(PLACEHOLDER_TIP);
+    var label = PLATFORM_LABELS[t.getAttribute("data-platform")] || "该平台";
+    showToast("「" + label + "」下载地址即将上线，敬请期待。");
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    document.querySelectorAll(".dl-dd.open").forEach(function (d) {
+      d.classList.remove("open");
+      d.querySelector(".dd-btn").setAttribute("aria-expanded", "false");
+    });
   });
 
   /* 滚动显现 */
