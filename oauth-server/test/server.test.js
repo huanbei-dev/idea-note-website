@@ -19,6 +19,13 @@ process.env.QZ_APP_SECRET = APP_SECRET;
 process.env.QZ_REDIRECT_URI = REDIRECT;
 process.env.CLIENT_PIN = PIN;
 process.env.QUIET = '1';
+process.env.SITE_BASE = 'https://ideanote.7373.com.cn';
+// 分享页存储：测试用独立临时目录，避免污染真实 data/notes
+const os = require('node:os');
+const fs = require('node:fs');
+const path = require('node:path');
+process.env.NOTES_DIR = path.join(os.tmpdir(), 'ideanote-oauth-test-notes-' + process.pid);
+fs.mkdirSync(process.env.NOTES_DIR, { recursive: true });
 
 // ---------- mock 开放平台 ----------
 const calls = { access_token: [], user_info: [] };
@@ -282,6 +289,58 @@ test('POST /oauth/refresh：平台 5xx → 502 且 invalid=false（瞬时故障�
 
 test('未知路径 404', async () => {
   const r = await get(base + '/nope');
+  assert.strictEqual(r.status, 404);
+});
+
+// ============ @ 分享页 ============
+test('POST /notes/publish：带 PIN 发布成功，返回公开 URL', async () => {
+  const r = await post(base + '/api/notes/publish', {
+    text: '这是一条 @施展 的测试笔记\n第二行 #工作',
+    author: '老板',
+    tags: ['工作'],
+    createdAt: 1700000000000
+  }, { 'x-ideanote-pin': PIN });
+  const j = JSON.parse(r.body);
+  assert.strictEqual(r.status, 200);
+  assert.strictEqual(j.code, 0);
+  assert.match(j.data.id, /^[A-Za-z0-9_-]{16,}$/);
+  assert.strictEqual(j.data.url, 'https://ideanote.7373.com.cn/notes/' + j.data.id);
+});
+
+test('POST /notes/publish：缺少 PIN 返回 403', async () => {
+  const r = await post(base + '/api/notes/publish', { text: 'x' });
+  assert.strictEqual(r.status, 403);
+});
+
+test('POST /notes/publish：空内容返回 400', async () => {
+  const r = await post(base + '/api/notes/publish', { text: '   ' }, { 'x-ideanote-pin': PIN });
+  assert.strictEqual(r.status, 400);
+  assert.match(r.body, /内容为空/);
+});
+
+test('GET /notes/<id>：公开访问返回渲染页面并转义内容', async () => {
+  const pub = JSON.parse((await post(base + '/api/notes/publish', {
+    text: '含 <script>alert(1)</script> 的正文',
+    author: '老板',
+    tags: ['工作'],
+    createdAt: 1700000000000
+  }, { 'x-ideanote-pin': PIN })).body).data;
+  const r = await get(base + '/notes/' + pub.id);
+  assert.strictEqual(r.status, 200);
+  assert.ok(r.body.includes('&lt;script&gt;'), 'HTML 必须转义，防 XSS');
+  assert.ok(!r.body.includes('<script>alert'), '原始标签不得出现在页面');
+  assert.ok(r.body.includes('老板'), '作者昵称展示');
+  assert.ok(r.body.includes('#工作'), '标签展示');
+});
+
+test('GET /notes/<id>：不存在的 id 返回 404 提示页', async () => {
+  const r = await get(base + '/notes/nonexistent_id_12345678');
+  assert.strictEqual(r.status, 404);
+  assert.ok(r.body.includes('不存在'));
+});
+
+test('GET /notes/<id>：非法 id（路径穿越）返回 404', async () => {
+  const r = await get(base + '/notes/..%2f..%2fetc%2fpasswd');
   assert.strictEqual(r.status, 404);
 });
 

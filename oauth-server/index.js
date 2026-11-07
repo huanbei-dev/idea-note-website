@@ -6,21 +6,26 @@
  * 而桌面端必须自己拿到 token 才能调 /open/idea_note/*。
  * 所以由本服务代为签名换 token，再通过一次性 state 把 token 交给客户端。
  *
- * 接口（全部 /oauth/* 前缀，nginx 反代到 127.0.0.1:3100）：
+ * 接口（nginx 反代到 127.0.0.1:3100）：
  *   GET  /oauth/start                       生成 state，返回授权地址
  *   GET  /oauth/callback?code&state         平台回调：换 token + 取用户信息，存一次性结果
  *   GET  /oauth/poll?state                  客户端轮询取结果（一次性核销）
  *   POST /oauth/refresh {refresh_token}     代理刷新（AppSecret 只在服务端）
+ *   POST /api/notes/publish                 生成 @ 分享页（PIN 鉴权），返回公开 URL
+ *   GET  /notes/<id>                        公开展示页（无鉴权，仅展示文本内容）
  *   GET  /health                            探针
  *
  * 设计要点：
- *  - 无状态：只在内存里存 pending/result（TTL 到点清理），重启只影响进行中的登录。
+ *  - 无状态：登录流程只在内存里存 pending/result（TTL 到点清理），重启只影响进行中的登录。
  *  - refresh_token 交给客户端保管（它是用户凭证）；服务端不落库，避免多一套存储故障面。
+ *  - @ 分享页持久化到磁盘 JSON（data/notes/<id>.json），重启不丢；页面只渲染转义后的文本。
  *  - 签名规则见 qz-sign.js，与客户端 qz/open-sign.js 同源。
  */
 
 const http = require('node:http');
 const crypto = require('node:crypto');
+const fs = require('node:fs');
+const path = require('node:path');
 
 // ---------- 配置 ----------
 const CFG = {
@@ -31,6 +36,10 @@ const CFG = {
   port: Number(process.env.PORT || 3100),
   // 客户端共享密钥：防止第三方白嫖 refresh 代理（空则不校验，仅调试用）
   clientPin: process.env.CLIENT_PIN || '',
+  // @ 分享页存储目录（磁盘 JSON，重启不丢）
+  notesDir: process.env.NOTES_DIR || path.join(__dirname, 'data', 'notes'),
+  // 分享页公开基址（页面 URL 拼域名）
+  siteBase: (process.env.SITE_BASE || 'https://ideanote.7373.com.cn').replace(/\/+$/, ''),
   // 授权页停留窗口 / 结果保留窗口
   pendingTtlMs: Number(process.env.PENDING_TTL_MS || 10 * 60 * 1000),
   resultTtlMs: Number(process.env.RESULT_TTL_MS || 5 * 60 * 1000),
@@ -289,6 +298,98 @@ function readJsonBody(req, limit = 64 * 1024) {
   });
 }
 
+// ---------- @ 分享页（公开展示，只存文本与元信息） ----------
+/** 笔记 ID：16 字节随机（URL 安全），不可枚举 */
+function newNoteId() {
+  return crypto.randomBytes(16).toString('base64url');
+}
+
+/** 只允许 [A-Za-z0-9_-]，防路径穿越 */
+function isSafeNoteId(id) {
+  return /^[A-Za-z0-9_-]{8,64}$/.test(String(id || ''));
+}
+
+function notePath(id) {
+  return path.join(CFG.notesDir, String(id) + '.json');
+}
+
+/** 读分享页记录；不存在/损坏返回 null */
+function readNote(id) {
+  if (!isSafeNoteId(id)) return null;
+  try {
+    const raw = fs.readFileSync(notePath(id), 'utf8');
+    const note = JSON.parse(raw);
+    if (!note || typeof note.text !== 'string') return null;
+    return note;
+  } catch (e) {
+    return null;
+  }
+}
+
+/** 写分享页记录；目录不存在自动创建 */
+function writeNote(note) {
+  fs.mkdirSync(CFG.notesDir, { recursive: true });
+  fs.writeFileSync(notePath(note.id), JSON.stringify(note), 'utf8');
+}
+
+/** HTML 转义（分享页内容来自用户输入，必须转义防 XSS） */
+function escapeHtml(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/** 分享页 HTML：手机优先，白底卡片；正文保留换行 */
+function renderNotePage(note) {
+  const text = escapeHtml(note.text);
+  const author = escapeHtml(note.author || '灵感笔记用户');
+  const tags = Array.isArray(note.tags) && note.tags.length
+    ? note.tags.map((t) => `<span class="tag">#${escapeHtml(t)}</span>`).join('')
+    : '';
+  const time = note.createdAt
+    ? new Date(Number(note.createdAt)).toLocaleString('zh-CN', { hour12: false })
+    : '';
+  return `<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>灵感笔记 · ${author}</title>
+<style>
+  *{box-sizing:border-box}
+  body{font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+       margin:0;background:#f5f1e8;color:#2b2218;line-height:1.7}
+  .wrap{max-width:680px;margin:0 auto;padding:32px 18px 48px}
+  .card{background:#fffdf8;border-radius:16px;padding:26px 22px;
+        box-shadow:0 6px 24px rgba(90,70,40,.10)}
+  .meta{display:flex;align-items:center;gap:10px;margin-bottom:14px;
+        padding-bottom:14px;border-bottom:1px solid #efe6d2;font-size:13px;color:#7a6b58}
+  .avatar{width:34px;height:34px;border-radius:50%;background:#8b6f47;color:#fff;
+          display:flex;align-items:center;justify-content:center;font-size:15px;flex:none}
+  .author{font-weight:600;color:#2b2218}
+  .time{margin-left:auto;white-space:nowrap}
+  .text{font-size:16px;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere}
+  .tags{margin-top:18px;display:flex;flex-wrap:wrap;gap:8px}
+  .tag{background:#f4e9d3;color:#8b6f47;border-radius:999px;padding:3px 12px;font-size:13px}
+  .foot{margin-top:26px;text-align:center;font-size:12px;color:#a99b84}
+  .foot a{color:#8b6f47;text-decoration:none}
+</style></head>
+<body><div class="wrap">
+  <div class="card">
+    <div class="meta">
+      <div class="avatar">${author.charAt(0).toUpperCase()}</div>
+      <div><div class="author">${author}</div><div>灵感笔记</div></div>
+      <div class="time">${time}</div>
+    </div>
+    <div class="text">${text}</div>
+    ${tags ? `<div class="tags">${tags}</div>` : ''}
+  </div>
+  <div class="foot">来自 <a href="${escapeHtml(CFG.siteBase)}">灵感笔记</a> · 仅通过分享链接访问</div>
+</div></body></html>`;
+}
+
 async function handle(req, res) {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   let path = url.pathname.replace(/\/+$/, '') || '/';
@@ -408,6 +509,51 @@ async function handle(req, res) {
       CFG.log('[open] 代理失败 ' + method + ' ' + target + ': ' + err.message);
       return sendJson(res, 502, { code: -1, message: 'upstream error: ' + err.message });
     }
+  }
+
+  // @ 分享页发布：PIN 鉴权，存盘后返回公开 URL
+  if (path === '/notes/publish' && req.method === 'POST') {
+    if (CFG.clientPin && req.headers['x-ideanote-pin'] !== CFG.clientPin) {
+      return sendJson(res, 403, { code: 1, message: 'forbidden' });
+    }
+    let body;
+    try {
+      body = await readJsonBody(req, 128 * 1024); // 单条分享页上限 128KB
+    } catch (err) {
+      return sendJson(res, 400, { code: 1, message: err.message });
+    }
+    const text = String((body && body.text) || '').trim();
+    if (!text) {
+      return sendJson(res, 400, { code: 1, message: '内容为空' });
+    }
+    if (text.length > 20000) {
+      return sendJson(res, 400, { code: 1, message: '内容过长' });
+    }
+    const note = {
+      id: newNoteId(),
+      text,
+      author: String((body && body.author) || '').slice(0, 64),
+      tags: Array.isArray(body && body.tags)
+        ? body.tags.map((t) => String(t)).filter((t) => t && t.length <= 32).slice(0, 20)
+        : [],
+      createdAt: Number((body && body.createdAt) || Date.now())
+    };
+    writeNote(note);
+    CFG.log('[notes] publish id=' + note.id.slice(0, 8) + '… len=' + note.text.length);
+    return sendJson(res, 200, {
+      code: 0,
+      data: { id: note.id, url: CFG.siteBase + '/notes/' + note.id }
+    });
+  }
+
+  // @ 分享页展示：公开无鉴权，仅返回渲染好的 HTML
+  if (path.startsWith('/notes/')) {
+    const id = path.slice('/notes/'.length);
+    const note = readNote(id);
+    if (!note) {
+      return sendHtml(res, 404, renderNotePage({ text: '这条笔记不存在或已过期。', author: '灵感笔记', tags: [], createdAt: 0 }));
+    }
+    return sendHtml(res, 200, renderNotePage(note));
   }
 
   // 代刷新
