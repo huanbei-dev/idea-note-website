@@ -333,6 +333,38 @@ test('GET /notes/<id>：公开访问返回渲染页面并转义内容', async ()
   assert.ok(r.body.includes('#工作'), '标签展示');
 });
 
+test('GET /notes/<id>：作者头像用真实头像渲染', async () => {
+  const pub = JSON.parse((await post(base + '/api/notes/publish', {
+    text: '带头像的分享',
+    author: '疯狐狸',
+    avatar: 'https://cdn.qzhuli.com/avatar/a1.png',
+    createdAt: 1700000000000
+  }, { 'x-ideanote-pin': PIN })).body).data;
+  const r = await get(base + '/notes/' + pub.id);
+  assert.strictEqual(r.status, 200);
+  assert.ok(r.body.includes('<img class="avatar" src="https://cdn.qzhuli.com/avatar/a1.png"'), '应渲染 <img> 头像');
+  assert.ok(!r.body.includes('class="avatar">疯'), '有头像时不应回退首字母');
+});
+
+test('GET /notes/<id>：无头像时回退首字母；javascript: 协议头像被拒绝', async () => {
+  const noAvatar = JSON.parse((await post(base + '/api/notes/publish', {
+    text: '无头像分享', author: '阿黄', createdAt: 1700000000000
+  }, { 'x-ideanote-pin': PIN })).body).data;
+  const r1 = await get(base + '/notes/' + noAvatar.id);
+  assert.strictEqual(r1.status, 200);
+  assert.ok(r1.body.includes('<div class="avatar">阿'), '无头像回退首字母');
+
+  const evil = JSON.parse((await post(base + '/api/notes/publish', {
+    text: '恶意头像', author: 'x',
+    avatar: 'javascript:alert(1)',
+    createdAt: 1700000000000
+  }, { 'x-ideanote-pin': PIN })).body).data;
+  const r2 = await get(base + '/notes/' + evil.id);
+  assert.strictEqual(r2.status, 200);
+  assert.ok(!r2.body.includes('javascript:'), '非 http(s) 协议头像必须被拒绝');
+  assert.ok(r2.body.includes('<div class="avatar">X'), '非法头像回退首字母');
+});
+
 test('GET /notes/<id>：不存在的 id 返回 404 提示页', async () => {
   const r = await get(base + '/notes/nonexistent_id_12345678');
   assert.strictEqual(r.status, 404);

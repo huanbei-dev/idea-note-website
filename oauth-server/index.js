@@ -342,7 +342,20 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
-/** 分享页 HTML：手机优先，白底卡片；正文保留换行 */
+/** 头像 URL 白名单：只允许 http/https，防 javascript: 等注入 */
+function safeAvatarUrl(value) {
+  const raw = String(value || '').trim();
+  if (!raw || raw.length > 500) return '';
+  try {
+    const u = new URL(raw);
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return '';
+    return raw;
+  } catch (e) {
+    return '';
+  }
+}
+
+/** 分享页 HTML：手机优先，纸感卡片；头像用作者真实头像（无头像回退首字母） */
 function renderNotePage(note) {
   const text = escapeHtml(note.text);
   const author = escapeHtml(note.author || '灵感笔记用户');
@@ -352,6 +365,10 @@ function renderNotePage(note) {
   const time = note.createdAt
     ? new Date(Number(note.createdAt)).toLocaleString('zh-CN', { hour12: false })
     : '';
+  const avatar = safeAvatarUrl(note.avatar);
+  const avatarHtml = avatar
+    ? `<img class="avatar" src="${escapeHtml(avatar)}" alt="${author}" referrerpolicy="no-referrer">`
+    : `<div class="avatar">${author.charAt(0).toUpperCase()}</div>`;
   return `<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -360,26 +377,27 @@ function renderNotePage(note) {
 <style>
   *{box-sizing:border-box}
   body{font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
-       margin:0;background:#f5f1e8;color:#2b2218;line-height:1.7}
+       margin:0;background:#f4e9d3;color:#2b2116;line-height:1.7}
   .wrap{max-width:680px;margin:0 auto;padding:32px 18px 48px}
-  .card{background:#fffdf8;border-radius:16px;padding:26px 22px;
-        box-shadow:0 6px 24px rgba(90,70,40,.10)}
+  .card{background:#fbf7ee;border-radius:16px;padding:26px 22px;
+        border:1px solid #e9dcc0;box-shadow:0 1px 2px rgba(60,40,15,.06),0 12px 32px rgba(120,85,40,.10)}
   .meta{display:flex;align-items:center;gap:10px;margin-bottom:14px;
-        padding-bottom:14px;border-bottom:1px solid #efe6d2;font-size:13px;color:#7a6b58}
-  .avatar{width:34px;height:34px;border-radius:50%;background:#8b6f47;color:#fff;
-          display:flex;align-items:center;justify-content:center;font-size:15px;flex:none}
-  .author{font-weight:600;color:#2b2218}
+        padding-bottom:14px;border-bottom:1px solid #e9dcc0;font-size:13px;color:#a08a70}
+  .avatar{width:36px;height:36px;border-radius:50%;background:#b6774c;color:#fff;
+          display:flex;align-items:center;justify-content:center;font-size:15px;flex:none;
+          object-fit:cover}
+  .author{font-weight:700;color:#2b2116}
   .time{margin-left:auto;white-space:nowrap}
-  .text{font-size:16px;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere}
+  .text{font-size:16px;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;color:#5d4430}
   .tags{margin-top:18px;display:flex;flex-wrap:wrap;gap:8px}
-  .tag{background:#f4e9d3;color:#8b6f47;border-radius:999px;padding:3px 12px;font-size:13px}
-  .foot{margin-top:26px;text-align:center;font-size:12px;color:#a99b84}
-  .foot a{color:#8b6f47;text-decoration:none}
+  .tag{background:#ecdfc4;color:#a05f35;border-radius:999px;padding:3px 12px;font-size:13px;font-weight:600}
+  .foot{margin-top:26px;text-align:center;font-size:12px;color:#a08a70}
+  .foot a{color:#b6774c;text-decoration:none}
 </style></head>
 <body><div class="wrap">
   <div class="card">
     <div class="meta">
-      <div class="avatar">${author.charAt(0).toUpperCase()}</div>
+      ${avatarHtml}
       <div><div class="author">${author}</div><div>灵感笔记</div></div>
       <div class="time">${time}</div>
     </div>
@@ -533,6 +551,7 @@ async function handle(req, res) {
       id: newNoteId(),
       text,
       author: String((body && body.author) || '').slice(0, 64),
+      avatar: safeAvatarUrl(body && body.avatar),
       tags: Array.isArray(body && body.tags)
         ? body.tags.map((t) => String(t)).filter((t) => t && t.length <= 32).slice(0, 20)
         : [],
