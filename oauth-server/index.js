@@ -136,7 +136,14 @@ async function refreshToken(refreshTokenValue) {
     const err = new Error(`刷新失败: HTTP ${status} code=${json && json.code} msg=${(json && json.msg) || '-'}`);
     err.qzCode = json && json.code;
     err.httpStatus = status;
-    err.invalid = json && (json.code === 40003 || json.code === 40004); // 明确的凭证失效
+    // 明确的凭证失效：40003/40004 是平台标准码；实测日志里平台对已失效/重放的
+    // refresh_token 返回「HTTP 200 code=4000 msg=refresh_token 已失效/重放」，
+    // 同样必须判死，否则客户端会当成瞬时故障无限重试
+    const msg = String((json && json.msg) || '');
+    err.invalid = json && (
+      json.code === 40003 || json.code === 40004 ||
+      (json.code === 4000 && msg.indexOf('refresh_token') >= 0)
+    );
     throw err;
   }
   return json.data;
@@ -468,7 +475,7 @@ async function handle(req, res) {
         refresh_token: tokenData.refresh_token || '',
         token_type: tokenData.token_type || 'Bearer',
         expires_in: Number(tokenData.expires_in) || 7200,
-        refresh_expires_in: Number(tokenData.refresh_expires_in) || 0,
+        refresh_expires_in: Number(tokenData.refresh_expires_in) || 90 * 24 * 3600,
         authorized_at: Date.now()
       };
       CFG.log('[oauth] 登录成功 q_uid=' + rec.result.q_uid);
@@ -596,7 +603,7 @@ async function handle(req, res) {
           refresh_token: data.refresh_token || '',
           token_type: data.token_type || 'Bearer',
           expires_in: Number(data.expires_in) || 7200,
-          refresh_expires_in: Number(data.refresh_expires_in) || 0,
+          refresh_expires_in: Number(data.refresh_expires_in) || 90 * 24 * 3600,
           q_uid: (data.user && data.user.q_uid) || ''
         }
       });

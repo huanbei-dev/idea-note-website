@@ -29,7 +29,7 @@ fs.mkdirSync(process.env.NOTES_DIR, { recursive: true });
 
 // ---------- mock 开放平台 ----------
 const calls = { access_token: [], user_info: [] };
-let mockBehavior = { tokenStatus: 200, tokenCode: 200, infoOk: true };
+let mockBehavior = { tokenStatus: 200, tokenCode: 200, infoOk: true, refreshNoExpires: false, tokenMsg: '' };
 
 function rfc3986(v) {
   return encodeURIComponent(String(v)).replace(/[!'()*]/g, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase());
@@ -79,7 +79,7 @@ const mockPlatform = http.createServer((req, res) => {
       calls.access_token.push({ body, signOk, headers: req.headers });
       if (mockBehavior.tokenStatus !== 200 || mockBehavior.tokenCode !== 200) {
         res.writeHead(mockBehavior.tokenStatus, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ code: mockBehavior.tokenCode, msg: 'mock error' }));
+        return res.end(JSON.stringify({ code: mockBehavior.tokenCode, msg: mockBehavior.tokenMsg || 'mock error' }));
       }
       const isRefresh = body.grant_type === 'refresh_token';
       return reply({
@@ -91,7 +91,8 @@ const mockPlatform = http.createServer((req, res) => {
           token_type: 'Bearer',
           credential_type: 'user',
           expires_in: 7200,
-          refresh_expires_in: 7776000,
+          // 模拟平台实测行为：refresh 响应可能不带 refresh_expires_in（客户端需兜底 90 天）
+          ...(mockBehavior.refreshNoExpires ? {} : { refresh_expires_in: 7776000 }),
           user: { q_uid: 'q_123' }
         }
       });
@@ -280,6 +281,33 @@ test('POST /oauth/refresh：平台 40004 → 401 且 invalid=true（明确失效
 
 test('POST /oauth/refresh：平台 5xx → 502 且 invalid=false（瞬时故障不踢登录）', async () => {
   mockBehavior = { tokenStatus: 503, tokenCode: 0, infoOk: true };
+  const r = await post(base + '/oauth/refresh', { refresh_token: 'or_x' }, { 'x-ideanote-pin': PIN });
+  const j = JSON.parse(r.body);
+  assert.strictEqual(r.status, 502);
+  assert.strictEqual(j.invalid, false);
+  mockBehavior = { tokenStatus: 200, tokenCode: 200, infoOk: true };
+});
+
+test('POST /oauth/refresh：平台不返回 refresh_expires_in → 服务器兜底 90 天', async () => {
+  mockBehavior = { tokenStatus: 200, tokenCode: 200, infoOk: true, refreshNoExpires: true };
+  const r = await post(base + '/oauth/refresh', { refresh_token: 'or_old' }, { 'x-ideanote-pin': PIN });
+  const j = JSON.parse(r.body);
+  assert.strictEqual(r.status, 200);
+  assert.strictEqual(j.data.refresh_expires_in, 90 * 24 * 3600, '缺省时必须兜底 90 天，否则客户端滚动续期失效');
+  mockBehavior = { tokenStatus: 200, tokenCode: 200, infoOk: true, refreshNoExpires: false };
+});
+
+test('POST /oauth/refresh：平台 HTTP 200 code=4000 + refresh_token 已失效 → 401 且 invalid=true（实测契约）', async () => {
+  mockBehavior = { tokenStatus: 200, tokenCode: 4000, tokenMsg: 'refresh_token 已失效', infoOk: true };
+  const r = await post(base + '/oauth/refresh', { refresh_token: 'or_dead' }, { 'x-ideanote-pin': PIN });
+  const j = JSON.parse(r.body);
+  assert.strictEqual(r.status, 401);
+  assert.strictEqual(j.invalid, true);
+  mockBehavior = { tokenStatus: 200, tokenCode: 200, infoOk: true };
+});
+
+test('POST /oauth/refresh：code=4000 但消息与 refresh_token 无关 → 502 不判死（防误踢登录）', async () => {
+  mockBehavior = { tokenStatus: 200, tokenCode: 4000, tokenMsg: '参数错误', infoOk: true };
   const r = await post(base + '/oauth/refresh', { refresh_token: 'or_x' }, { 'x-ideanote-pin': PIN });
   const j = JSON.parse(r.body);
   assert.strictEqual(r.status, 502);
